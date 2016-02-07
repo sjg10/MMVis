@@ -36,10 +36,10 @@
 /*
  * TODO: comment
  */
-bool mm_parse_preprocess(FILE * fp, char * _pf)
+bool mm_parse_preprocess(FILE * fp, char ** _pf)
 {
     bool retval = TRUE;
-    char * pf = _pf - 1; //increment before any read!
+    char * pf = (*_pf) - 1; //increment before any read!
     int save_space = INITIAL_MAX_INPUT_SIZE;
     bool comment_block = FALSE;
     do
@@ -85,12 +85,12 @@ bool mm_parse_preprocess(FILE * fp, char * _pf)
             if (feof(fp)) break;
         }
         if (comment_block == TRUE) pf--;
-        //TODO: test
-        if ( (pf - _pf) > (save_space - 2) )
+
+        if ( (pf - (*_pf)) > (save_space - 2) )
         {
-                printf("realloc memory\n");
+            //printf("realloc memory\n");
             save_space *= 2;
-            char* tmp = realloc(_pf, save_space);
+            char* tmp = realloc((*_pf), save_space);
             if (tmp == NULL)
             {
                 retval = FALSE;
@@ -98,17 +98,16 @@ bool mm_parse_preprocess(FILE * fp, char * _pf)
             }
             else
             {
-                pf = tmp + (pf - _pf);
-                _pf = tmp;
+                pf = tmp + (pf - (*_pf));
+                *_pf = tmp;
             }
         }
     } while(retval == TRUE);
     if(comment_block == TRUE) retval = FALSE;
-    //TODO: consider EOF -> null char ending
     *pf = '\0';
     // /* DEBUG TODO: tidy!
         FILE* fout = fopen("out.c","w");
-        fprintf(fout,"%s",_pf);
+        fprintf(fout,"%s",*_pf);
         fclose(fout);
     // */
     return retval;
@@ -141,7 +140,7 @@ bool mm_parse_input(char * input_file)
         char* preprocessed_file = (char*) malloc(INITIAL_MAX_INPUT_SIZE * sizeof(char));
         retval &= (preprocessed_file == NULL ? FALSE : TRUE);
 
-        if (retval == TRUE) retval &= mm_parse_preprocess(fp, preprocessed_file);
+        if (retval == TRUE) retval &= mm_parse_preprocess(fp, &preprocessed_file);
         fclose(fp); //TODO: error check, combine with other if-case
 
         if (retval == TRUE) retval &= mm_parse_process(preprocessed_file);
